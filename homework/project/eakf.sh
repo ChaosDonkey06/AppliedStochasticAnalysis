@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=8:00:00
+#SBATCH --time=0:45:00
 #SBATCH --mem=4GB
 #SBATCH --job-name=ASA_project_eafk
 #SBATCH --mail-type=END
