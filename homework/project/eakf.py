@@ -57,8 +57,6 @@ parameters_range  = np.array([[αmin, αmax],
                       (ρmax - ρmin)/10,
                       (βmax - βmin)/10])
 
-
-
 δt = 1e-3
 
 def f(t, x, α, ρ, β):
