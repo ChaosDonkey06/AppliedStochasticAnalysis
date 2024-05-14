@@ -11,6 +11,7 @@
 #SBATCH --output=/results/slurm_%j.text
 #SBATCH --array=0-99
 
+module purge
 module load python/intel/3.8.6
 
 RUNDIR=/scratch/jc12343/AppliedStochasticAnalysis/homework/project
