@@ -1,15 +1,20 @@
 #!/bin/bash
 
-#SBATCH --nodes=1
-#SBATCH --cpus-per-task=4
-#SBATCH --ntasks-per-node=1
+#SBATCH --job-name=ASA_project_eakf
+#SBATCH --output=out/if-eakf%A_%a.out
+#SBATCH --error=error/if-eakf%A_%a.err
 #SBATCH --time=0:45:00
-#SBATCH --mem=4GB
-#SBATCH --job-name=ASA_project_eafk
 #SBATCH --mail-type=END
 #SBATCH --mail-user=jc12343@nyu.edu
-#SBATCH --output=/results/slurm_%j.text
+#SBATCH --partition=cs
 #SBATCH --array=0-99
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=10
+#SBATCH --mem-per-cpu=10GB
+#SBATCH --cpus-per-task=1
+
+#SBATCH --chdir=/scratch/jc12343/AppliedStochasticAnalysis/homework/project
+
 
 module purge
 module load python/intel/3.8.6

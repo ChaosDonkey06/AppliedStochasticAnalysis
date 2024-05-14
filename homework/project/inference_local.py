@@ -122,15 +122,15 @@ def if_pf(process_model,
 
     for n in tqdm(range(if_settings["Nif"]), leave=leave_progress):
         if n==0:
-            p_prior     = sample_uniform2(param_range, m)
-            x           = state_space_initial_guess(p_prior)
+            p_prior          = sample_uniform2(param_range, m)
+            x                = state_space_initial_guess(p_prior)
             param_mean[:, n] = np.mean(p_prior, -1)
-            w           = naive_weights(m) # init particle filter weights
+            w                = naive_weights(m) # init particle filter weights
 
         else:
             pmean   = param_mean[:, n]
             pvar    = SIG * cooling_sequence[n]
-            p_prior = sample_truncated_normal(pmean, pvar ** (0.5), param_range, m)
+            p_prior = p_post.copy() #sample_truncated_normal(pmean, pvar ** (0.5), param_range, m)
             x       = state_space_initial_guess(p_prior)
             w       = naive_weights(m) # init particle filter weights
 

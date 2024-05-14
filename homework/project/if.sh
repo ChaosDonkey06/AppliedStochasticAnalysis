@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=ASA_project
+#SBATCH --job-name=ASA_project_pf
 #SBATCH --output=out/if-pf%A_%a.out
 #SBATCH --error=error/if-pf%A_%a.err
 #SBATCH --time=0:45:00
