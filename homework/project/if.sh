@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --cpus-per-task=4
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=8:00:00
@@ -17,4 +17,4 @@ RUNDIR=/scratch/jc12343/AppliedStochasticAnalysis/homework/project
 cd $RUNDIR
 
 ## Execute the desired python file
-python3 pf.py --i $SLURM_ARRAY_TASK_ID
+python3 pf.py --i $SLURM_ARRAY_TASK_ID %>% test.txt

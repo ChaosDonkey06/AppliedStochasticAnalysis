@@ -91,7 +91,6 @@ parameters_range  = np.array([[αmin, αmax],
 
 infer_df, tsim, xsim, id_infer = simulate_inference_trajectory(h=δt, tmax=10)
 
-
 def f(t, x, α, ρ, β):
     params = {"α": α, "ρ": ρ, "β": β}
     return euler_maruyama_sde_01(x, t, δt, params)
