@@ -21,10 +21,8 @@ parser.add_argument('--i', type=int, help='microbial pathogen',
 
 idx_save_infer = parser.parse_args().i
 
-
-
 model_settings = {
-    "m"           : 2000,                       # number of particles
+    "m"           : 1000,                       # number of particles
     "p"           : 3,                          # number of parameters
     "k"           : 3,                          # number of observations
     "n"           : 3,                          # number of state variables / dimension of the state space

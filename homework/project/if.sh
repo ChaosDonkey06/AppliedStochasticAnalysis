@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --job-name=First_Search_MIF_run_1
+#SBATCH --job-name=ASA_project
 #SBATCH --output=out/if-pf%A_%a.out
 #SBATCH --error=error/if-pf%A_%a.err
 #SBATCH --partition=broadwl
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=48
-#SBATCH --mem-per-cpu=3000
+#SBATCH --ntasks-per-node=10
+#SBATCH --mem-per-cpu=1000
 #SBATCH --cpus-per-task=1
 #SBATCH --time=0:45:00
 #SBATCH --mail-type=END
