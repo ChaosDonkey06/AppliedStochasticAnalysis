@@ -1,4 +1,4 @@
-from ifeakf import cooling, sample_uniform2, random_walk_perturbation, checkbound_params, check_state_space
+from ifeakf import cooling, sample_uniform2, random_walk_perturbation, checkbound_params, check_state_space, sample_truncated_normal
 
 from tqdm import tqdm
 import pandas as pd
@@ -130,7 +130,7 @@ def if_pf(process_model,
         else:
             pmean   = param_mean[:, n]
             pvar    = SIG * cooling_sequence[n]
-            p_prior = p_post.copy() #sample_truncated_normal(pmean, pvar ** (0.5), param_range, m)
+            p_prior = sample_truncated_normal(pmean, pvar ** (0.5), param_range, m)
             x       = state_space_initial_guess(p_prior)
             w       = naive_weights(m) # init particle filter weights
 

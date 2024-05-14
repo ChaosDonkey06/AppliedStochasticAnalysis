@@ -105,7 +105,6 @@ f_if  = lambda t, x, θ: f(t, x, θ[0, :], θ[1, :], θ[2, :])
 g_if  = lambda t, x, θ: g(t, x, θ)
 f0_if = lambda θ: f0(model_settings["m"])
 
-
 from inference_local import if_pf
 
 infer_df, tsim, xsim, id_infer    = simulate_inference_trajectory(h=δt, tmax=10)
