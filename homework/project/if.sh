@@ -20,4 +20,4 @@ module purge
 module load python/intel/3.8.6
 
 ## Execute the desired python file
-python3 pf.py --i $SLURM_ARRAY_TASK_ID
+python3 run_smc.py --i $SLURM_ARRAY_TASK_ID

@@ -1,17 +1,16 @@
-from plot_utils import *
 import pandas as pd
 import numpy as np
 import datetime
 import os
 
 import sys
-sys.path.insert(0, "pompjax/pompjax")
+sys.path.insert(0, "inference")
 
-from diagnostic_plots import convergence_plot
-from utils import create_df_response
+from model import simulate_em_sde01, euler_maruyama_sde_01
+from diagnostic_plot import convergence_plot
+from samples2df import create_df_response
 from ifeakf import ifeakf
-
-from model import simulate_em_sde01, euler_maruyama_sde_01, simulate_inference_trajectory
+from plot_utils import *
 
 ####-####-####-####-####-####
 import argparse
@@ -36,12 +35,11 @@ if_settings = {
    "type_cooling"       : "geometric",            # type of cooling schedule
    "shrinkage_factor"   : 0.9,                    # shrinkage factor for the cooling schedule
    "inflation"          : 0,                   # inflation factor for spreading the variance after the EAKF step
-}
+    }
 
 def normal_loglikelihood(real_world_observations, model_observations, error_variance=None, A=0.1, num_times=100):
     if not error_variance:
         error_variance = 1 + (0.2*real_world_observations)**2
-
     nll =  A * np.exp(-0.5 * (real_world_observations - model_observations)**2 / error_variance) # Normal LL
     return - np.sum(nll, 0)
 

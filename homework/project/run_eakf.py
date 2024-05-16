@@ -1,17 +1,17 @@
-from plot_utils import *
 import pandas as pd
 import numpy as np
 import datetime
 import os
 
 import sys
-sys.path.insert(0, "pompjax/pompjax")
-
-from diagnostic_plots import convergence_plot
-from utils import create_df_response
-from ifeakf import ifeakf
+sys.path.insert(0, "inference")
 
 from model import simulate_em_sde01, euler_maruyama_sde_01, simulate_inference_trajectory
+from diagnostic_plot import convergence_plot
+from samples2df import create_df_response
+from ifeakf import ifeakf
+from plot_utils import *
+
 
 ####-####-####-####-####-####
 import argparse

@@ -1,88 +1,39 @@
-from ifeakf import cooling, sample_uniform2, random_walk_perturbation, checkbound_params, check_state_space, sample_truncated_normal
-
-from tqdm import tqdm
+#import jax.numpy as jnp
 import pandas as pd
 import numpy as np
+#import jax
 
-def normal_loglikelihood(real_world_observations, model_observations, error_variance=None, A=0.1, num_times=100):
-    if not error_variance:
-        error_variance = 1 + (0.2*real_world_observations)**2
+from tqdm import tqdm
 
-    nll =  A * np.exp(-0.5 * (real_world_observations - model_observations)**2 / error_variance) # Normal LL
-    return - nll
+from stats import sample_uniform2, sample_truncated_normal
+from inference import check_state_space, checkbound_params, inflate_ensembles, eakf_update
 
-def normalize_weights(w):
+def random_walk_perturbation(param, param_std):
+    p, m = param.shape
+    return param + np.expand_dims(param_std, -1) * np.random.normal(size=(p, m))
+
+def geometric_cooling(if_iters, cooling_factor=0.9):
+    """ Geometric cooling
+        Args:
+            if_iters       (int): number of iterations of the IF algorithm
+            cooling_factor (float): cooling factor (variance shrinking rate)
     """
-    Weight normalization.
-    w: Particle weights.
-    """
-    return w / np.sum(w)
+    alphas = cooling_factor**np.arange(if_iters)
+    return alphas**2
 
-def compute_effective_sample_size(w):
-    """
-    Effective sample size.
-    """
-    return 1/np.sum(w**2)
+def hyperbolic_cooling(if_iters, cooling_factor=0.9):
+    alphas = 1/(1+cooling_factor*np.arange(if_iters))
+    return alphas
 
-def importance_sampling(w, z, y, q):
-    """ Importance sampling:
-            Approximate likelihood P(z|θ) using the importance density q(z|y).
-            Where y=g(x;θ) is the observation model used after using the state space model f(x;θ).
-            Compute the relative weight of each particle respect the previous PF iteration and normalize the weights.
-        w: Particle weights.
-        z: World observations.
-        y: Modelled observations.
-        q: Proposal distribution.
-    """
-    loglik  = q(z , y)
+def cooling(num_iteration_if, type_cool="geometric", cooling_factor=0.9):
+    if type_cool=="geometric":
+        return geometric_cooling(num_iteration_if, cooling_factor=cooling_factor)
+    elif type_cool=="hyperbolic":
+        return hyperbolic_cooling(num_iteration_if, cooling_factor=cooling_factor)
 
-    # Recompute weights and normalize them
-    w = w * loglik
-    w = normalize_weights(w)
-
-    return w
-
-def naive_weights(m):
-    """
-    Naive weights.
-        Assume all particles have the same weight.
-    """
-    return np.ones(m)*1/m
-
-def resample_particles(particles, x, w, m, p=None):
-    """
-    Particle resample.
-    """
-    if p:
-        fixed_particles = np.sort(np.random.choice(np.arange(m), size=int(m*(1-p)), replace=False, p=w))
-        particles_index = np.random.choice(np.arange(m), size=m, replace=True, p=w)
-        particles_index[fixed_particles] = fixed_particles
-    else:
-        particles_index = np.sort(np.random.choice(np.arange(m), size=m, replace=True, p=w))
-
-    w         = naive_weights(m)
-    particles = particles[:, particles_index] # Replace particles.
-    x_post    = x[:, particles_index]
-
-    return particles, x_post, w
-
-def pf(w, pprior, x, y, z, q):
-    """
-    Particle filter.
-    """
-
-    # IS(w, z, y, q)
-    m               = pprior.shape[1]
-    w               = importance_sampling(w, z, y, q)
-    ppost, xpost, w = resample_particles(pprior, x, w, m, p=0.1)
-    w               = importance_sampling(w, z, y, q)
-
-    return ppost, xpost, w
-
-def if_pf(process_model,
+def ifeakf(process_model,
             observational_model,
             state_space_initial_guess,
-            measure_density,
             observations_df,
             parameters_range,
             state_space_range,
@@ -122,17 +73,14 @@ def if_pf(process_model,
 
     for n in tqdm(range(if_settings["Nif"]), leave=leave_progress):
         if n==0:
-            p_prior          = sample_uniform2(param_range, m)
-            x                = state_space_initial_guess(p_prior)
+            p_prior     = sample_uniform2(param_range, m)
+            x           = state_space_initial_guess(p_prior)
             param_mean[:, n] = np.mean(p_prior, -1)
-            w                = naive_weights(m) # init particle filter weights
-
         else:
             pmean   = param_mean[:, n]
             pvar    = SIG * cooling_sequence[n]
-            p_prior = p_post.copy() #sample_truncated_normal(pmean, pvar ** (0.5), param_range, m)
+            p_prior = sample_truncated_normal(pmean, pvar ** (0.5), param_range, m)
             x       = state_space_initial_guess(p_prior)
-            w       = naive_weights(m) # init particle filter weights
 
         t_assim    = 0
         cum_obs    = np.zeros((k, m))
@@ -149,17 +97,23 @@ def if_pf(process_model,
                 p_prior     = checkbound_params(p_prior, param_range)
 
                 # Measured observations
-                z = observations_df.loc[pd.to_datetime(date)][[f"y{i+1}" for i in range(k)]].values
-                z = np.expand_dims(z, -1)
+                z     = observations_df.loc[pd.to_datetime(date)][[f"y{i+1}" for i in range(k)]].values
+                oev   = observations_df.loc[pd.to_datetime(date)][[f"oev{i+1}" for i in range(k)]].values
 
                 x_post = x.copy()
                 p_post = p_prior.copy()
 
+                # Update state space
+                if adjust_state_space:
+                    x_post, _ = eakf_update(x_post, cum_obs, z, oev)
+                    x_post    = inflate_ensembles(x_post, inflation_value=if_settings["inflation"], m=m)
+                    x_post    = check_state_space(x_post, state_space_range)
+
                 # Update parameter space
-                p_post, x_post, w = pf(w, p_prior, x_post, z, cum_obs, measure_density)
+                p_post, _ = eakf_update(p_prior, cum_obs, z, oev)
+                p_post    = inflate_ensembles(p_post, inflation_value=if_settings["inflation"], m=m)
 
                 # check for a-physicalities in the state and parameter space.
-                x_post = check_state_space(x_post, state_space_range)
                 p_post = checkbound_params(p_post, param_range)
 
                 p_prior = p_post.copy()
@@ -172,4 +126,5 @@ def if_pf(process_model,
 
         param_post_all[:, :, :, n] = param_time
         param_mean[:, n+1]         = param_time.mean(-1).mean(-1) # average posterior over all assimilation times and them over all ensemble members
+
     return param_mean, param_post_all
